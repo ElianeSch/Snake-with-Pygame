@@ -12,8 +12,8 @@ import random
 
 '''Les paramètres constants'''
 
-largeur,hauteur = 450,450
-carre_x,carre_y = 15,15
+largeur,hauteur = 500,500
+carre_x,carre_y = 20,20
 taille_pomme_x,taille_pomme_y = 15,15
 taille_mur_x,taille_mur_y = 15,15
 deplacement = carre_x
@@ -33,14 +33,10 @@ fenetre = pygame.display.set_mode((largeur,hauteur))
 
 '''Chargement des images à utiliser et transformation à la taille voulue'''
 
-p = pygame.image.load('apple.png').convert_alpha()
-pomme = pygame.transform.scale(p,(taille_pomme_x,taille_pomme_y)) # Pomme rouge
-carre_vert_bis = pygame.image.load('carre_vert.png').convert_alpha()
-carre_vert = pygame.transform.scale(carre_vert_bis,(carre_x,carre_y)) # Corps du serpent
-regles_1 = pygame.image.load('regles_1.png').convert_alpha()
-regle_1 = pygame.transform.scale(regles_1,(largeur,hauteur)) # Règles du jeu
-perdu = pygame.image.load('perdu.jpg').convert_alpha()
-fin = pygame.transform.scale(perdu,(largeur,hauteur)) # Image de fin
+pomme = pygame.transform.scale(pygame.image.load('apple.png').convert_alpha(),(taille_pomme_x,taille_pomme_y)) # Pomme rouge
+carre_vert = pygame.transform.scale(pygame.image.load('carre_vert.png').convert_alpha(),(carre_x,carre_y)) # Corps du serpent
+regle_1 = pygame.transform.scale(pygame.image.load('regles_1.png').convert_alpha(),(largeur,hauteur)) # Règles du jeu
+fin = pygame.transform.scale(pygame.image.load('perdu.jpg').convert_alpha(),(largeur,hauteur)) # Image de fin
 
 #################################################
 
@@ -52,7 +48,7 @@ debut_titre = [(20,150),(20,250),(20,350)] # Coordonnées du coin supérieur gau
 titres = ['Jouer','Comment jouer','Quitter'] # Titres du menu
 taille_rect = [(130,40),(340,40),(160,45)] # Taille (longueur,largeur) des rectangles définissant les 'boutons' du menu
 
-def afficher_menu():
+def afficher_menu(color,ind):
     
     '''Fonction qui affiche le menu, en utilisant des rectangles de la même couleur que le fond, que l'on 'remplit' de texte'''
     
@@ -72,9 +68,14 @@ def afficher_menu():
     fond_menu.blit(titre,pos)
     
     for i in range(len(titres)):
-        titre_1 = police_2.render(titres[i],True,(0,0,0))
-        rectangle = pygame.draw.rect(fond_menu,(20,148,20),Rect(debut_titre[i],taille_rect[i]))
-        fond_menu.blit(titre_1,debut_titre[i])
+        if i!=ind:
+            titre_1 = police_2.render(titres[i],True,(0,0,0))
+            rectangle = pygame.draw.rect(fond_menu,(20,148,20),Rect(debut_titre[i],taille_rect[i]))
+            fond_menu.blit(titre_1,debut_titre[i])
+        else:
+            titre_1 = police_2.render(titres[i],True,color)
+            rectangle = pygame.draw.rect(fond_menu,(20,148,20),Rect(debut_titre[ind],taille_rect[ind]))
+            fond_menu.blit(titre_1,debut_titre[ind])
         
     fenetre.blit(fond_menu,(0,0))
     pygame.display.flip()
@@ -157,45 +158,58 @@ rejouer = 1
 accueil = 1
 fin_du_jeu = 0
 
-
 while rejouer:
-
+    
     continuer = 1
     clic = 0
     regles_du_jeu = 0
     touche = 'right'
     points = 0
     pause = False
-
+    cadre = False
+    ind = None
+    
     '''Le serpent est défini par une liste de coordonnées ; la queue correspond au 1er élément et la tête au dernier
     On fait bien attention à le réinitiaiser à chaque fois qu'on rejoue'''
     
     Snake = [(x0,y0),(x0+carre_x,y0),(x0+2*carre_x,y0)]
     xpomme,ypomme = random.uniform(50,largeur-50),random.uniform(50,hauteur-50) # Coordonnées de la première pomme à s'afficher
 
+############################################################## Boucle de jeu
     while continuer: # Boucle principale de jeu
-        
         
         if fin_du_jeu:
             
             for event in pygame.event.get():
                 
                 if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
+                    
                     rejouer = 0
                     pygame.quit()
                     
                 elif event.type == KEYDOWN and event.key == K_SPACE:
-    
+                    
                     accueil = 1
                     fin_du_jeu = 0
                     print('On rejoue !')
 
         jeu = 1
-        
+############################################################# ACCUEIL
         while accueil:
             
-            afficher_menu() # Affichage du menu
+            # Si on passe la souris sur un des titres, on change la couleur du titre
+            # Et si la souris passe sur une zone sans titre, il faut remettre en noir le titre précédemment survolé
+
+            souris_x,souris_y = pygame.mouse.get_pos() # On récupère les coordonnées de la souris
             
+            if cadre == False:afficher_menu((0,0,0),None) # Affichage du menu, avec une couleur noire pour les titres
+            
+            else:
+                
+                if souris_x < debut_titre[ind][0] or souris_x > debut_titre[ind][0] + taille_rect[ind][0] or souris_y < debut_titre[ind][1]or souris_y > debut_titre[ind][1] + taille_rect[ind][1]:cadre = False
+                else:afficher_menu((0,47,167),ind) 
+                
+                
             for event in pygame.event.get():
                 
                 if event.type == QUIT:
@@ -213,6 +227,13 @@ while rejouer:
                             elif i == 2:
                                 jeu,accueil,continuer = 0,0,0
                                 pygame.quit()
+            
+            
+            for i in range(len(titres)):
+                
+                if souris_x >= debut_titre[i][0] and souris_x <= debut_titre[i][0] + taille_rect[i][0] and souris_y >= debut_titre[i][1] and souris_y <= debut_titre[i][1] + taille_rect[i][1]:
+                    cadre = True
+                    ind = i
                                 
         if regles_du_jeu : # Si le joueur a cliqué sur 'règles du jeu'
             
@@ -231,8 +252,10 @@ while rejouer:
         
         elif clic: # Si le joueur a cliqué sur 'Jouer' ou bien était dans les règles du jeu et a appuyé sur la barre d'espace:
 
+######################################################################################### JEU 
             while jeu:
                 
+                # Boucle de pause
                 while pause: # Tant qu'on est en pause, on ne fait rien que d'attendre la reprise
                     
                     for event in pygame.event.get():
@@ -244,6 +267,7 @@ while rejouer:
                         elif event.type == QUIT:
                             
                             pygame.quit()
+                # Fin de la boucle de pause
                 
                 
                 fond = pygame.Surface(fenetre.get_size()).convert()
@@ -321,5 +345,3 @@ while rejouer:
                         afficher_serpent()
                 
                 accelere(points)
-
-# Reste à voir : affichage des points, murs, obstacles, pommes bonus
